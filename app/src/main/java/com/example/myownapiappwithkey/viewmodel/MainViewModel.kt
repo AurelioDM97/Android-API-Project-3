@@ -1,31 +1,38 @@
 package com.example.myownapiappwithkey.viewmodel
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myownapiappwithkey.network.NetworkProvider
-import com.example.myownapiappwithkey.network.dto.JokeResponse
-import com.example.myownapiappwithkey.network.dto.JokesDataBody
+import com.example.myownapiappwithkey.network.JokesRepository
+import com.example.myownapiappwithkey.network.remote.JokesAPI
+import com.example.myownapiappwithkey.network.remote.dto.JokeResponse
+import com.example.myownapiappwithkey.network.remote.dto.JokesDataBody
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import java.lang.Exception
 
-class MainViewModel : ViewModel() {
+class MainViewModel(private val repository: JokesRepository) : ViewModel() {
 
-    val jokes = MutableSharedFlow<JokesDataBody>()
-    var jokesApi = NetworkProvider()
+    private val _jokes = MutableSharedFlow<List<JokesDataBody>>()
+    val jokes: SharedFlow<List<JokesDataBody>> get() = _jokes
 
-    fun getJokesNetworkCall() {
+    init {
         viewModelScope.launch {
             try {
-                val response = jokesApi.getJokesData()
-                if(response.success) {
-                    jokes.emit(response.body[0])
-                }
+                repository.getJoke()
             } catch (e: Exception) {
                 e.printStackTrace()
-
             }
         }
     }
+    fun generateNewJoke() {
+        viewModelScope.launch {
+            repository.getJoke()
+        }
+    }
+    fun getJokesFlow(): SharedFlow<List<JokesDataBody>> = _jokes
 }
+    //val jokesFlow : MutableSharedFlow<JokesDataBody> get() = repository.jokesFlow
+
